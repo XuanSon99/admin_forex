@@ -86,7 +86,7 @@ export default {
         {
           icon: "mdi-account-circle-outline",
           text: "Khách hàng",
-          route: "/user",
+          route: "/",
         },
         {
           icon: "mdi-layers-outline",
