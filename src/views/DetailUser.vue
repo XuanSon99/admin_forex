@@ -1,0 +1,279 @@
+<template>
+  <main>
+    <div class="item secondary">
+      <v-card-title>
+        <v-icon class="mr-2" color="primary" large>mdi-account-circle-outline</v-icon>
+        {{ $route.params.id }} {{ agency ? '| Đại lý' : '' }}
+        <v-spacer></v-spacer>
+        <v-dialog v-model="dialog" max-width="500px">
+          <template v-slot:activator="{ on, attrs }">
+            <v-btn color="primary" dark class="mb-2" v-bind="attrs" v-on="on">
+              Thêm mới
+            </v-btn>
+          </template>
+          <v-card>
+            <v-card-title>
+              <span class="headline">{{ formTitle }}</span>
+            </v-card-title>
+
+            <v-card-text>
+              <v-container>
+                <v-row>
+                  <v-col cols="12">
+                    <v-menu ref="menu" v-model="menu" :close-on-content-click="false" :return-value.sync="editedItem.date"
+                      transition="scale-transition" offset-y max-width="290px" min-width="auto">
+                      <template v-slot:activator="{ on, attrs }">
+                        <v-text-field v-model="editedItem.date" label="Chọn tháng" prepend-inner-icon="mdi-calendar"
+                          readonly v-bind="attrs" v-on="on"></v-text-field>
+                      </template>
+                      <v-date-picker v-model="editedItem.date" no-title scrollable locale="vi">
+                        <v-spacer></v-spacer>
+                        <v-btn text color="primary" @click="menu = false">
+                          Hủy
+                        </v-btn>
+                        <v-btn text color="primary" @click="$refs.menu.save(editedItem.date)">
+                          Xác nhận
+                        </v-btn>
+                      </v-date-picker>
+                    </v-menu>
+                  </v-col>
+                </v-row>
+                <v-row>
+                  <v-col cols="12">
+                    <v-text-field v-model="editedItem.balance" label="Số dư" type="number" prepend-inner-icon="mdi-wallet" />
+                  </v-col>
+                </v-row>
+                <v-row>
+                  <v-col cols="12">
+                    <v-text-field v-model="editedItem.profit" label="Lợi nhuận" type="number" prepend-inner-icon="mdi-currency-usd" />
+                  </v-col>
+                </v-row>
+                <v-row>
+                  <v-col cols="12">
+                    <v-text-field v-model="editedItem.commission" label="Hoa hồng" type="number"
+                      prepend-inner-icon="mdi-hand-coin-outline" />
+                  </v-col>
+                </v-row>
+              </v-container>
+            </v-card-text>
+
+            <v-card-actions>
+              <v-spacer />
+              <v-btn color="blue darken-1" text @click="close">
+                Hủy
+              </v-btn>
+              <v-btn color="blue darken-1" text @click="save">
+                Xác nhận
+              </v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+        <v-dialog v-model="dialogDelete" max-width="500px">
+          <v-card>
+            <v-card-title class="headline">
+              Xác nhận xóa
+            </v-card-title>
+            <v-card-actions>
+              <v-spacer />
+              <v-btn color="blue darken-1" text @click="closeDelete">
+                Hủy
+              </v-btn>
+              <v-btn color="blue darken-1" text @click="deleteItemConfirm">
+                Xác nhận
+              </v-btn>
+              <v-spacer />
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+      </v-card-title>
+      <v-data-table :headers="headers" :items="desserts" :search="search">
+        <template v-slot:[`item.actions`]="{ item }">
+          <v-btn small class="info mr-2" @click="editItem(item)">
+            Cập nhật
+          </v-btn>
+          <v-btn small class="error" @click="deleteItem(item)">Xóa</v-btn>
+        </template>
+        <template v-slot:[`item.brokerage_money`]="{ item }">
+          {{ brokerageMoney(item) }}
+        </template>
+        <template v-slot:[`item.profit_with_fee`]="{ item }">
+          {{ profitƯithFee(item) }}
+        </template>
+      </v-data-table>
+    </div>
+  </main>
+</template>
+
+<script>
+export default {
+  data: () => ({
+    menu: false,
+    modal: false,
+    search: "",
+    dialog: false,
+    dialogDelete: false,
+    desserts: [],
+    editedIndex: -1,
+    headers: [
+      { text: "ID", value: "id" },
+      { text: "Thời gian", value: "date" },
+      { text: "Số dư", value: "balance" },
+      { text: "Lợi nhuận", value: "profit" },
+      { text: "LN sau phí", value: "profit_with_fee" },
+      { text: "Hoa hồng", value: "commission" },
+      { text: "Tiền giới thiệu", value: "brokerage_money" },
+      { text: "Thao tác", value: "actions", sortable: false },
+    ],
+    editedItem: {
+      date: new Date().toISOString().substr(0, 10),
+      profit: "",
+      balance: "",
+      commission: "",
+    },
+    defaultItem: {
+      date: new Date().toISOString().substr(0, 10),
+      profit: "",
+      balance: "",
+      commission: "",
+    },
+    agency: 0,
+  }),
+
+  computed: {
+    formTitle() {
+      return this.editedIndex === -1 ? 'Thêm mới' : 'Cập nhật';
+    },
+  },
+
+  watch: {
+    dialog(val) {
+      val || this.close();
+    },
+    dialogDelete(val) {
+      val || this.closeDelete();
+    },
+  },
+
+  mounted() {
+    this.getData();
+  },
+
+  methods: {
+    profitƯithFee(item) {
+      if (this.agency) {
+        return item.profit - item.profit * 0.1
+      }
+      return item.profit - item.profit * 0.2
+    },
+
+    brokerageMoney(item) {
+      if (this.agency) {
+        return item.brokerage_money + (item.profit / 5 + item.commission) / 2
+      }
+      return item.brokerage_money
+    },
+
+    getData() {
+      this.CallAPI("get", "customer/" + this.$route.params.id, {}, (res) => {
+        this.desserts = res.data.data;
+        this.agency = res.data.agency
+      });
+    },
+
+    editItem(item) {
+      this.editedIndex = this.desserts.indexOf(item);
+      this.editedItem = Object.assign({}, item);
+      this.dialog = true;
+    },
+
+    deleteItem(item) {
+      this.editedIndex = this.desserts.indexOf(item);
+      this.editedItem = Object.assign({}, item);
+      this.dialogDelete = true;
+    },
+
+    deleteItemConfirm() {
+      this.closeDelete();
+      this.CallAPI(
+        "delete",
+        "profit/" + this.desserts[this.editedIndex].id,
+        {},
+        (response) => {
+          this.$toast.success("Xóa thành công");
+          this.getData();
+        },
+        (error) => { }
+      );
+    },
+
+    formatMoney(value) {
+      if (!value) return 0;
+      return String(parseFloat(value).toFixed(0))
+        .toString()
+        .replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    },
+
+    close() {
+      this.dialog = false;
+      this.$nextTick(() => {
+        this.editedItem = Object.assign({}, this.defaultItem);
+        this.editedIndex = -1;
+      });
+    },
+
+    closeDelete() {
+      this.dialogDelete = false;
+      this.$nextTick(() => {
+        this.editedItem = Object.assign({}, this.defaultItem);
+        this.editedIndex = -1;
+      });
+    },
+
+    save() {
+      if (
+        !this.editedItem.date || !this.editedItem.profit || !this.editedItem.commission
+      ) {
+        this.$toast.error("Nhập đủ thông tin");
+        return;
+      }
+      const data = {
+        date: this.editedItem.date,
+        account: this.$route.params.id,
+        profit: this.editedItem.profit,
+        balance: this.editedItem.balance,
+        commission: this.editedItem.commission
+      };
+
+      if (this.editedIndex > -1) {
+        this.CallAPI(
+          "put",
+          "profit/" + this.desserts[this.editedIndex].id,
+          data,
+          (response) => {
+            this.$toast.success("Sửa thành công");
+            this.getData();
+            this.close();
+          },
+          (error) => {
+            this.$toast.error("Đã xảy ra lỗi");
+          }
+        );
+      } else {
+        this.CallAPI(
+          "post",
+          "profit",
+          data,
+          (response) => {
+            this.$toast.success("Thêm thành công");
+            this.getData();
+            this.close();
+          },
+          (error) => {
+            this.$toast.error(error.response.data.message[0]);
+          }
+        );
+      }
+    },
+  },
+};
+</script>
