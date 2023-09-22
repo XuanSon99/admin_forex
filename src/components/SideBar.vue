@@ -116,7 +116,7 @@ export default {
       }
       this.CallAPI(
         "put",
-        "manage/admin/" + localStorage.getItem("username"),
+        "admin/" + localStorage.getItem("username"),
         {
           password: this.password,
         },
