@@ -1,19 +1,29 @@
 <template>
   <main>
     <div class="item secondary">
-      <v-data-table :headers="headers" :items="desserts" :items-per-page="10" :page.sync="page"
-        :server-items-length="totalItems" :footer-props="{ 'items-per-page-options': [10, 10] }">
+      <v-data-table :headers="headers" :items="desserts" :search="search">
         <template v-slot:top>
           <v-toolbar flat>
-            <v-text-field v-model="search" append-icon="mdi-magnify" label="Search" @keydown.enter="searchHandle"
-              single-line hide-details />
+            <v-text-field
+              v-model="search"
+              append-icon="mdi-magnify"
+              label="Search"
+              single-line
+              hide-details
+            />
             <v-spacer />
             <v-btn color="info" dark class="mb-2 mr-2" @click="updateMoney">
               Cập nhật hoa hồng
             </v-btn>
             <v-dialog v-model="dialog" max-width="500px">
               <template v-slot:activator="{ on, attrs }">
-                <v-btn color="primary" dark class="mb-2" v-bind="attrs" v-on="on">
+                <v-btn
+                  color="primary"
+                  dark
+                  class="mb-2"
+                  v-bind="attrs"
+                  v-on="on"
+                >
                   Thêm mới
                 </v-btn>
               </template>
@@ -26,22 +36,26 @@
                   <v-container>
                     <v-row>
                       <v-col cols="12">
-                        <v-text-field v-model="editedItem.name" label="Họ tên" />
+                        <v-text-field
+                          v-model="editedItem.name"
+                          label="Họ tên"
+                        />
                       </v-col>
                     </v-row>
                     <v-row>
                       <v-col cols="12">
-                        <v-text-field v-model="editedItem.account" label="Số tài khoản" />
+                        <v-text-field
+                          v-model="editedItem.account"
+                          label="Số tài khoản"
+                        />
                       </v-col>
                     </v-row>
                     <v-row>
                       <v-col cols="12">
-                        <v-text-field v-model="editedItem.refferal" label="Người giới thiệu" />
-                      </v-col>
-                    </v-row>
-                    <v-row>
-                      <v-col cols="12">
-                        <v-checkbox v-model="editedItem.agency" label="Đại lý"></v-checkbox>
+                        <v-text-field
+                          v-model="editedItem.refferal"
+                          label="Người giới thiệu"
+                        />
                       </v-col>
                     </v-row>
                   </v-container>
@@ -49,9 +63,7 @@
 
                 <v-card-actions>
                   <v-spacer />
-                  <v-btn color="blue darken-1" text @click="close">
-                    Hủy
-                  </v-btn>
+                  <v-btn color="blue darken-1" text @click="close"> Hủy </v-btn>
                   <v-btn color="blue darken-1" text @click="save">
                     Xác nhận
                   </v-btn>
@@ -60,9 +72,7 @@
             </v-dialog>
             <v-dialog v-model="dialogDelete" max-width="500px">
               <v-card>
-                <v-card-title class="headline">
-                  Xác nhận xóa
-                </v-card-title>
+                <v-card-title class="headline"> Xác nhận xóa </v-card-title>
                 <v-card-actions>
                   <v-spacer />
                   <v-btn color="blue darken-1" text @click="closeDelete">
@@ -78,7 +88,11 @@
           </v-toolbar>
         </template>
         <template v-slot:[`item.actions`]="{ item }">
-          <v-btn small class="primary mr-2" @click="$router.push(`/user/${item.account}`)">
+          <v-btn
+            small
+            class="primary mr-2"
+            @click="$router.push(`/user/${item.account}`)"
+          >
             Chi tiết
           </v-btn>
           <v-btn small class="info mr-2" @click="editItem(item)">
@@ -87,8 +101,13 @@
           <v-btn small class="error" @click="deleteItem(item)">Xóa</v-btn>
         </template>
         <template v-slot:[`item.agency`]="{ item }">
-          <v-btn v-if="item.agency" color="primary" outlined small>Đại lý</v-btn>
+          <v-btn v-if="item.agency" color="primary" outlined small
+            >Đại lý</v-btn
+          >
           <v-btn v-else color="error" outlined small>Không</v-btn>
+        </template>
+        <template v-slot:[`item.brokerage_money`]="{ item }">
+          {{ brokerageMoney(item) }}
         </template>
       </v-data-table>
     </div>
@@ -105,33 +124,29 @@ export default {
     desserts: [],
     editedIndex: -1,
     headers: [
-      { text: "ID", value: "id" },
       { text: "Số tài khoản", value: "account" },
       { text: "Họ tên", value: "name" },
       { text: "Người giới thiệu", value: "refferal" },
       { text: "Đại lý", value: "agency" },
+      { text: "Hoa hồng", value: "brokerage_money" },
       { text: "Thao tác", value: "actions", sortable: false },
     ],
     editedItem: {
       name: "",
       account: "",
       refferal: "",
-      agency: 0,
     },
     defaultItem: {
       name: "",
       account: "",
       refferal: "",
-      agency: 0,
     },
-    page: 0,
-    totalItems: 0,
   }),
 
   computed: {
     ...mapGetters(["account", "user_page"]),
     formTitle() {
-      return this.editedIndex === -1 ? 'Thêm mới' : 'Cập nhật';
+      return this.editedIndex === -1 ? "Thêm mới" : "Cập nhật";
     },
   },
 
@@ -142,37 +157,41 @@ export default {
     dialogDelete(val) {
       val || this.closeDelete();
     },
-    page() {
-      this.getData();
-      this.$store.dispatch("setUserPage", this.page);
-    },
-    search() {
-      if (!this.search) {
-        this.getData()
-      }
-    }
   },
 
   mounted() {
-    this.page = this.user_page;
+    this.getData();
   },
 
   methods: {
+    brokerageMoney(item) {
+      if(!item.brokerage_money) return 0;
+      
+      if (item.agency) {
+        return item.brokerage_money + (item.profit / 5 + item.commission) / 2;
+      }
+      return item.brokerage_money;
+    },
     updateMoney() {
       this.CallAPI("get", "update-money", {}, (res) => {
+        this.getData();
         this.$toast.success("Cập nhật hoa hồng thành công");
       });
     },
     getData() {
-      this.CallAPI("get", "customer?page=" + this.page, {}, (res) => {
-        this.desserts = res.data.data;
-        this.totalItems = res.data.total;
+      this.CallAPI("get", "customer", {}, (res) => {
+        this.desserts = res.data;
       });
     },
     searchHandle() {
-      this.CallAPI("get", "search/customers?query=" + this.search, {}, (res) => {
-        this.desserts = res.data;
-      });
+      this.CallAPI(
+        "get",
+        "search/customers?query=" + this.search,
+        {},
+        (res) => {
+          this.desserts = res.data;
+        }
+      );
     },
 
     editItem(item) {
@@ -197,7 +216,7 @@ export default {
           this.$toast.success("Xóa thành công");
           this.getData();
         },
-        (error) => { }
+        (error) => {}
       );
     },
 
@@ -218,9 +237,7 @@ export default {
     },
 
     save() {
-      if (
-        !this.editedItem.account
-      ) {
+      if (!this.editedItem.account) {
         this.$toast.error("Nhập đủ thông tin");
         return;
       }
@@ -228,7 +245,7 @@ export default {
         name: this.editedItem.name,
         account: this.editedItem.account,
         refferal: this.editedItem.refferal,
-        agency: this.editedItem.agency
+        agency: this.editedItem.refferal == "IB56389360" ? 1 : 0,
       };
 
       if (this.editedIndex > -1) {

@@ -20,26 +20,6 @@
               <v-container>
                 <v-row>
                   <v-col cols="12">
-                    <v-menu ref="menu" v-model="menu" :close-on-content-click="false" :return-value.sync="editedItem.date"
-                      transition="scale-transition" offset-y max-width="290px" min-width="auto">
-                      <template v-slot:activator="{ on, attrs }">
-                        <v-text-field v-model="editedItem.date" label="Chọn tháng" prepend-inner-icon="mdi-calendar"
-                          readonly v-bind="attrs" v-on="on"></v-text-field>
-                      </template>
-                      <v-date-picker v-model="editedItem.date" no-title scrollable locale="vi">
-                        <v-spacer></v-spacer>
-                        <v-btn text color="primary" @click="menu = false">
-                          Hủy
-                        </v-btn>
-                        <v-btn text color="primary" @click="$refs.menu.save(editedItem.date)">
-                          Xác nhận
-                        </v-btn>
-                      </v-date-picker>
-                    </v-menu>
-                  </v-col>
-                </v-row>
-                <v-row>
-                  <v-col cols="12">
                     <v-text-field v-model="editedItem.balance" label="Số dư" type="number" prepend-inner-icon="mdi-wallet" />
                   </v-col>
                 </v-row>
@@ -97,7 +77,7 @@
           {{ brokerageMoney(item) }}
         </template>
         <template v-slot:[`item.profit_with_fee`]="{ item }">
-          {{ profitƯithFee(item) }}
+          {{ profitWithFee(item) }}
         </template>
       </v-data-table>
     </div>
@@ -116,7 +96,6 @@ export default {
     editedIndex: -1,
     headers: [
       { text: "ID", value: "id" },
-      { text: "Thời gian", value: "date" },
       { text: "Số dư", value: "balance" },
       { text: "Lợi nhuận", value: "profit" },
       { text: "LN sau phí", value: "profit_with_fee" },
@@ -125,13 +104,11 @@ export default {
       { text: "Thao tác", value: "actions", sortable: false },
     ],
     editedItem: {
-      date: new Date().toISOString().substr(0, 10),
       profit: "",
       balance: "",
       commission: "",
     },
     defaultItem: {
-      date: new Date().toISOString().substr(0, 10),
       profit: "",
       balance: "",
       commission: "",
@@ -159,7 +136,7 @@ export default {
   },
 
   methods: {
-    profitƯithFee(item) {
+    profitWithFee(item) {
       if (this.agency) {
         return item.profit - item.profit * 0.1
       }
@@ -231,13 +208,12 @@ export default {
 
     save() {
       if (
-        !this.editedItem.date || !this.editedItem.profit || !this.editedItem.commission
+        !this.editedItem.profit || !this.editedItem.commission
       ) {
         this.$toast.error("Nhập đủ thông tin");
         return;
       }
       const data = {
-        date: this.editedItem.date,
         account: this.$route.params.id,
         profit: this.editedItem.profit,
         balance: this.editedItem.balance,
