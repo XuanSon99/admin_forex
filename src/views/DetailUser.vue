@@ -20,17 +20,13 @@
               <v-container>
                 <v-row>
                   <v-col cols="12">
-                    <v-text-field v-model="editedItem.balance" label="Số dư" type="number" prepend-inner-icon="mdi-wallet" />
+                    <v-text-field v-model="editedItem.profit" label="Lợi nhuận" type="number"
+                      prepend-inner-icon="mdi-currency-usd" />
                   </v-col>
                 </v-row>
                 <v-row>
                   <v-col cols="12">
-                    <v-text-field v-model="editedItem.profit" label="Lợi nhuận" type="number" prepend-inner-icon="mdi-currency-usd" />
-                  </v-col>
-                </v-row>
-                <v-row>
-                  <v-col cols="12">
-                    <v-text-field v-model="editedItem.commission" label="Hoa hồng" type="number"
+                    <v-text-field v-model="editedItem.commission" label="Commission" type="number"
                       prepend-inner-icon="mdi-hand-coin-outline" />
                   </v-col>
                 </v-row>
@@ -79,9 +75,6 @@
         <template v-slot:[`item.profit_with_fee`]="{ item }">
           {{ profitWithFee(item) }}
         </template>
-        <template v-slot:[`item.balance`]="{ item }">
-          {{ formatPrice(item.balance) }}
-        </template>
         <template v-slot:[`item.profit`]="{ item }">
           {{ formatPrice(item.profit) }}
         </template>
@@ -105,7 +98,6 @@ export default {
     editedIndex: -1,
     headers: [
       { text: "ID", value: "id" },
-      { text: "Số dư", value: "balance" },
       { text: "Lợi nhuận", value: "profit" },
       { text: "LN sau phí", value: "profit_with_fee" },
       { text: "Commission", value: "commission" },
@@ -114,12 +106,10 @@ export default {
     ],
     editedItem: {
       profit: "",
-      balance: "",
       commission: "",
     },
     defaultItem: {
       profit: "",
-      balance: "",
       commission: "",
     },
     agency: 0,
@@ -153,11 +143,15 @@ export default {
     },
 
     brokerageMoney(item) {
-      if (!item.brokerage_money) return 0;
-
       if (this.agency) {
-        return this.formatPrice(item.brokerage_money + (item.profit - item.commission) / 10 + item.commission / 4);
+        let com = (item.profit - item.commission) / 10 + item.commission / 4;
+        if (item.brokerage_money) {
+          com += item.brokerage_money
+        }
+        return this.formatPrice(com);
       }
+
+      if (!item.brokerage_money) return 0;
       return this.formatPrice(item.brokerage_money);
     },
 
@@ -228,7 +222,6 @@ export default {
       const data = {
         account: this.$route.params.id,
         profit: this.editedItem.profit,
-        balance: this.editedItem.balance,
         commission: this.editedItem.commission
       };
 

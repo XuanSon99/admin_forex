@@ -87,9 +87,6 @@
         <template v-slot:[`item.brokerage_money`]="{ item }">
           {{ brokerageMoney(item) }}
         </template>
-        <template v-slot:[`item.balance`]="{ item }">
-          {{ formatPrice(item.balance) }}
-        </template>
         <template v-slot:[`item.profit`]="{ item }">
           {{ formatPrice(item.profit) }}
         </template>
@@ -114,7 +111,6 @@ export default {
       { text: "Họ tên", value: "name" },
       { text: "Số tài khoản", value: "account" },
       { text: "Người giới thiệu", value: "refferal" },
-      { text: "Số dư", value: "balance" },
       { text: "Lợi nhuận", value: "profit" },
       { text: "Commission", value: "commission" },
       { text: "Hoa hồng", value: "brokerage_money" },
@@ -155,11 +151,15 @@ export default {
 
   methods: {
     brokerageMoney(item) {
-      if (!item.brokerage_money) return 0;
-
       if (item.agency) {
-        return this.formatPrice(item.brokerage_money + (item.profit - item.commission) / 10 + item.commission / 4);
+        let com = (item.profit - item.commission) / 10 + item.commission / 4;
+        if (item.brokerage_money) {
+          com += item.brokerage_money
+        }
+        return this.formatPrice(com);
       }
+
+      if (!item.brokerage_money) return 0;
       return this.formatPrice(item.brokerage_money);
     },
 
@@ -182,7 +182,6 @@ export default {
                 <th style="width: 120px">Họ tên</th>
                 <th style="width: 80px">Số tài khoản</th>
                 <th style="width: 120px">Người giới thiệu</th>
-                <th style="width: 80px">Số dư</th>
                 <th style="width: 80px">Lợi nhuận</th>
                 <th style="width: 100px">Commission</th>
                 <th style="width: 100px">Tiền hoa hồng</th>
@@ -198,13 +197,12 @@ export default {
                     <td style="text-align: center">${item.name}</td>
                     <td style="text-align: center">${item.account}</td>
                     <td style="text-align: center">${item.refferal}</td>
-                    <td style="text-align: center">${this.formatPrice(item.balance)}</td>
                     <td style="text-align: center">${this.formatPrice(item.profit)}</td>
                     <td style="text-align: center">${this.formatPrice(item.commission)}</td>
                     <td style="text-align: center">${this.brokerageMoney(item)}</td>
                 </tr>
             `;
-            total += this.brokerageMoney(item)
+          total += this.brokerageMoney(item)
         }
 
         // this.excel_htmls += `
