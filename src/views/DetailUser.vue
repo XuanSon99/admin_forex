@@ -79,6 +79,15 @@
         <template v-slot:[`item.profit_with_fee`]="{ item }">
           {{ profitWithFee(item) }}
         </template>
+        <template v-slot:[`item.balance`]="{ item }">
+          {{ formatPrice(item.balance) }}
+        </template>
+        <template v-slot:[`item.profit`]="{ item }">
+          {{ formatPrice(item.profit) }}
+        </template>
+        <template v-slot:[`item.commission`]="{ item }">
+          {{ formatPrice(item.commission) }}
+        </template>
       </v-data-table>
     </div>
   </main>
@@ -99,8 +108,8 @@ export default {
       { text: "Số dư", value: "balance" },
       { text: "Lợi nhuận", value: "profit" },
       { text: "LN sau phí", value: "profit_with_fee" },
-      { text: "Hoa hồng", value: "commission" },
-      { text: "Tiền giới thiệu", value: "brokerage_money" },
+      { text: "Commission", value: "commission" },
+      { text: "Hoa hồng", value: "brokerage_money" },
       { text: "Thao tác", value: "actions", sortable: false },
     ],
     editedItem: {
@@ -138,16 +147,18 @@ export default {
   methods: {
     profitWithFee(item) {
       if (this.agency) {
-        return item.profit - item.profit * 0.1
+        return this.formatPrice(item.profit - item.profit * 0.1)
       }
-      return item.profit - item.profit * 0.2
+      return this.formatPrice(item.profit - item.profit * 0.2)
     },
 
     brokerageMoney(item) {
+      if (!item.brokerage_money) return 0;
+
       if (this.agency) {
-        return item.brokerage_money + (item.profit / 5 + item.commission) / 2
+        return this.formatPrice(item.brokerage_money + (item.profit - item.commission) / 10 + item.commission / 4);
       }
-      return item.brokerage_money
+      return this.formatPrice(item.brokerage_money);
     },
 
     getData() {
@@ -183,11 +194,12 @@ export default {
       );
     },
 
-    formatMoney(value) {
+    formatPrice(value) {
       if (!value) return 0;
-      return String(parseFloat(value).toFixed(0))
+      return String(parseFloat(value).toFixed(2))
         .toString()
-        .replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        .replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+        .replace('.00', '')
     },
 
     close() {
